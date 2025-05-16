@@ -1,7 +1,5 @@
 # structpe
 
-**Disclaimer: This is an early release with lots of rough edges. Public release version (general availability) in is preparation. Please expect minor/major changes in the framework.**
-
 ## Introduction
 A flexible Python library for building, annotating, generating, and evaluating multiple dataset types for DP-synthetic datasets.
 
@@ -188,3 +186,5 @@ python -m unittest tests.test_dataset
     - `test_evaluator.py` (tests evaluation output).
 
 ---
+
+**Disclaimer: Please expect changes in the framework as we improve it further based on feedback from researchers and practitioners.**
