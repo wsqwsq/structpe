@@ -220,6 +220,20 @@ class Evaluator:
         print(table_str)
 
         return results_dict
+    
+    def TV_distance(self, a, b):     # a,b: array of values
+        if list(a)==[] or list(b)==[]:
+            return np.inf
+        count_a, count_b = Counter(a), Counter(b)
+        support = sorted(set(count_a.keys()).union(set(count_b.keys())))
+
+        pmf_a = np.array([count_a[l] for l in support], dtype = float)
+        pmf_a /= pmf_a.sum()
+        pmf_b = np.array([count_b[l] for l in support], dtype = float)
+        pmf_b /= pmf_b.sum()
+
+        distance = np.sum(np.abs(pmf_a-pmf_b)) / 2
+        return distance
 
     def _evaluate_dataset(self, dataset_obj):
         samples = getattr(dataset_obj, "samples", [])
@@ -648,6 +662,38 @@ class Evaluator:
         # Then store pairwise_dist_dict as "knn_distribution_distance" => a dictionary
         results_dict["aggregate"]["knn_distribution_distance"] = pairwise_dist_dict
 
+
+        # --- ADDED: Distributional Distance for Any Attribute ---
+        # We'll compute a dictionary of distance, and store the synthetic vs private arrays
+        try:
+            attribute = results_dict["aggregate"]["grammar_check"].get("attribute", {})
+            # attribute is a user-defined function that returns a dict of attribute_name => [values]
+            # TODO: ensure users can define attribute function in the dataset_module
+
+            # We'll also store them in results_dict["aggregate"]["knn_distribution_distance"] as a dict
+            attribute_dist_dict = {}
+            for key_name, main_agg in attribute.items():
+                main_vals = main_agg.get("all_values_synthetic", [])
+                priv_vals = private_distributions.get(key_name, [])
+                # store them so user can see
+                attribute_dist_dict[key_name] = {
+                    "synthetic_distribution": main_vals,
+                    "private_distribution": priv_vals,
+                    "distance": 0.0
+                }
+                if main_vals and priv_vals:
+                    if type(main_vals) == str: # TV distance for categorical distributions
+                        dist_val = self.TV_distance(main_vals, priv_vals)
+                    else:
+                        dist_val = wasserstein_distance(main_vals, priv_vals)
+                    attribute_dist_dict[key_name]["distance"] = round(dist_val,8)
+
+            # Then store pairwise_dist_dict as "knn_distribution_distance" => a dictionary
+            results_dict["aggregate"]["attribute_distribution_distance"] = attribute_dist_dict
+        except Exception as e:
+            print(f"[Evaluator] WARNING: attribute distribution distance => user should define the attribute function")
+            results_dict["aggregate"]["attribute_distribution_distance"] = {}
+
         return results_dict
 
     def _safe_debug_dict(self, verifier_obj, sample):
@@ -819,11 +865,14 @@ class Evaluator:
         # 5) KNN distribution distance
         knn_distances = aggregator.get("knn_distribution_distance", {})
 
-        # 6) KNN precision
+        # 6) attribute distribution distance
+        attribute_distances = aggregator.get("attribute_distribution_distance", {})
+
+        # 7) KNN precision
         knn_info = aggregator.get("knn_metrics", {})
         knn_precision = knn_info.get("knn_precision", 0.0)
 
-        # 7) KNN recall
+        # 8) KNN recall
         knn_recall = knn_info.get("knn_recall", 0.0)
 
         # Build table lines
@@ -847,6 +896,15 @@ class Evaluator:
         if knn_distances:
             for dist_key, dist_info in knn_distances.items():
                 wdist = dist_info.get("wasserstein_distance", 0.0)
+                lines.append(f"   {dist_key}: {wdist}")
+        else:
+            lines.append("   (No distribution distances found)")
+
+        lines.append("")
+        lines.append("Attribute Distribution Distances:")
+        if attribute_distances:
+            for dist_key, dist_info in attribute_distances.items():
+                wdist = dist_info.get("distance", 0.0)
                 lines.append(f"   {dist_key}: {wdist}")
         else:
             lines.append("   (No distribution distances found)")
