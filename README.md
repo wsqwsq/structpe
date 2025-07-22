@@ -23,7 +23,7 @@ This repository implements Struct-Bench, a novel evaluation framework and a benc
 ## Project Setup
 1. **Clone the Repo**
 ```bash
-git clone https://github.com/vyraun/structpe.git
+git clone hhttps://github.com/struct-bench/structpe.git
 cd structpe
 ```
 
@@ -40,7 +40,7 @@ pip install -e .
 
 ---
 ## Forking & Pull Requests
-Contributions to **Struct-Bench** are welcome! To propose a change or new feature, follow these steps:
+Adding new datasets to **Struct-Bench** are welcome! To propose a change or new feature, follow these steps:
 1. **Fork the Repo on GitHub**
    - Visit the [structpe GitHub page](https://github.com/yourusername/structpe), click “Fork”, and choose your GitHub account.
 
@@ -106,7 +106,9 @@ Please refer to <a href="structpe/dataset">this link</a> for more details on the
 ---
 ## Generating Synthetic Datasets
 
-We implement the Augmented Private Evolution (Aug-PE) algorithm [(Xie et al. 2024)](https://arxiv.org/abs/2403.01749) in <a href="structpe/generator">structpe/generator</a>. 
+We adopt the DP Fine-tuning [(Yu et al. 2021)](https://arxiv.org/pdf/2110.06500) and Augmented Private Evolution (Aug-PE) algorithm [(Xie et al. 2024)](https://arxiv.org/abs/2403.01749) to generate synthetic datasets on graph-structured data ([ShareGPT](https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/tree/bcd32a724d8460ebe14e1d05b0195e30e9a46cb1), [ICLR reviews](https://openreview.net/group?id=ICLR.cc/2024/Conference)), tabular data ([Water](https://www.kaggle.com/datasets/tharunmss/water-bottle-dataset-flipkart), [Arena](https://arxiv.org/pdf/2306.05685), [Adult](https://archive.ics.uci.edu/dataset/2/adult)), and attribute controllable data ([Reviews](https://www.kaggle.com/datasets/structpedataset/structpe-synthetic-datasets), [Grounding](https://www.kaggle.com/datasets/structpedataset/structpe-synthetic-datasets)). We adopt the external library [microsoft/dp-transformers](https://github.com/microsoft/dp-transformers/tree/main/research/synthetic-text-generation-with-DP) for DP Fine-tuning, and [microsoft/DPSDA](https://github.com/microsoft/DPSDA) for Aug-PE.
+
+We also implement the Aug-PE algorithm in <a href="structpe/generator">structpe/generator</a> to generate synthetic attribute controllable data. 
 
 Generate DP synthetic text with Aug-PE:
 
@@ -120,7 +122,7 @@ synthetic_texts = run_generation_pipeline(
         concurrency=4,
         init_count=10,
         iterations=3,
-        endpoint="https://myazureendpoint.openai.azure.com/",
+        endpoint="https://myazureendpoint.openai.azure.com/",   # replace to your OpenAI endpoint
         deployment="gpt-4"
 )
 ```
@@ -138,8 +140,6 @@ synthetic_texts = run_generation_pipeline(
 A list of final generated strings.
 
 Please refer to <a href="structpe/generator">this link</a> for more details on the synthetic data generation.
-
-You can also generate synthetic datasets via external libraries (e.g., [microsoft/DPSDA](https://github.com/microsoft/DPSDA), [microsoft/dp-transformers](https://github.com/microsoft/dp-transformers/tree/main/research/synthetic-text-generation-with-DP)).
 
 
 ---
